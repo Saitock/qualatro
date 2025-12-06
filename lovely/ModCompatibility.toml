@@ -1,0 +1,41 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 5
+
+# Compatibility with Pokermon/Cryptid
+# Fixes crash while using goto in tax fraud
+[[patches]]
+[patches.pattern]
+target = "functions/state_events.lua"
+pattern = '''
+    local jirachis = find_joker('jirachi_banker')
+    for i = 1, #jirachis do
+      add_round_eval_row({bonus = true, name='joker_jirachi'..i, pitch = pitch, dollars = dollars, card = jirachis[i]})
+      dollars = dollars + dollars
+    end
+'''
+position = "at"
+payload = '''
+do
+  local jirachis = find_joker('jirachi_banker')
+  for i = 1, #jirachis do
+    add_round_eval_row({bonus = true, name='joker_jirachi'..i, pitch = pitch, dollars = dollars, card = jirachis[i]})
+    dollars = dollars + dollars
+  end
+end
+'''
+match_indent = true
+
+# Compatibility with JokerDisplay
+# Prevent crashing if attempting to move something without passing dt
+# Will mess up animations, but that's better than crashing
+[[patches]]
+[patches.pattern]
+target = "engine/moveable.lua"
+pattern = "function Moveable:move(dt)"
+position = "after"
+payload = '''
+    if dt == nil then dt = 0 end
+'''
+match_indent = true
