@@ -3713,9 +3713,11 @@ local function missingno()
 
 	local function random_colour(key)
 		local colour = pseudorandom_element(G.C, "missingno_colour_"..key)
-		while (type(colour[1]) ~= "number") do
-			colour = pseudorandom_element(G.C, "missingno_colour_"..key)
-		end
+		if not pcall(function()
+			while (type(colour[1]) ~= "number") do
+				colour = pseudorandom_element(G.C, "missingno_colour_"..key)
+			end
+		end) then colour = G.C.MONEY end
 		return colour
 	end
 
@@ -3750,7 +3752,7 @@ local function missingno()
 			for i = 1, 6 do
 				card.config.center.loc_txt.text_parsed[i] = nil
 				local random_desc = pseudorandom_element(G.localization.descriptions.Joker, "missingnoDesc")
-				if random_desc.text and random_desc.text[i] then
+				if random_desc.text and random_desc.text[i] and type(random_desc.text[i]) == "string" then
 					local parsed_string = loc_parse_string(random_desc.text[i])
 					if not parsed_string then break end
 					for _,v in pairs(parsed_string) do
@@ -6222,7 +6224,7 @@ local function limited_liability_partnership()
 		blueprint_compat = false,
 		perishable_compat = false,
 		calculate = function(_, card, context)
-			if context.joker_main and card.ability.extra.stolen_money > to_big(0) then
+			if context.joker_main and to_big(card.ability.extra.stolen_money) > to_big(0) then
 				local xmult_total = 1 + card.ability.extra.xmult * card.ability.extra.stolen_money
 				return {
 					message = localize{type='variable',key='a_xmult',vars={xmult_total}},
@@ -7855,17 +7857,19 @@ local _super_calculate_individual_effect = SMODS.calculate_individual_effect
 function SMODS.calculate_individual_effect(effect, scored_card, key, amount, from_edition)
 	--NOTE(Ahmayk) We assume that if a joker is stored in these places, then it is considered "triggered" 
 	--we do NOT count effects from editions, we only care if a joker's effect was triggered
-	if type(amount) == "number" and not from_edition then
-		if effect.card and effect.card.ability.set == "Joker" then
-			add_to_joker_results_table(effect.card.ID)
+	pcall(function()
+		if type(amount) == "number" and not from_edition then
+			if effect.card and effect.card.ability and effect.card.ability.set == "Joker" then
+				add_to_joker_results_table(effect.card.ID)
+			end
+			if effect.juice_card and effect.juice_card.ability and effect.juice_card.ability.set == "Joker" then
+				add_to_joker_results_table(effect.juice_card.ID)
+			end
+			if scored_card and scored_card.ability and scored_card.ability.set == "Joker" then
+				add_to_joker_results_table(scored_card.ID)
+			end
 		end
-		if effect.juice_card and effect.juice_card.ability.set == "Joker" then
-			add_to_joker_results_table(effect.juice_card.ID)
-		end
-		if scored_card and scored_card.ability.set == "Joker" then
-			add_to_joker_results_table(scored_card.ID)
-		end
-	end
+	end)
 	return _super_calculate_individual_effect(effect, scored_card, key, amount, from_edition) 
 end
 
