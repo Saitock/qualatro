@@ -8052,7 +8052,7 @@ function Game:update(dt)
 			end
 		end
 
-		if G.title_top and #G.title_top.cards >= 1 then
+		if G.title_top and G.title_top.cards and #G.title_top.cards >= 1 then
 			active_joker_key_table[G.title_top.cards[1].config.center.key] = true
 		end
 
